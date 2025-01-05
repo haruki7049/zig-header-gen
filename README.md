@@ -18,6 +18,10 @@ Here are the following supported Zig language features:
 - [x] Extern Unions
 - [x] Extern Enums
 
+## Zig version
+
+zig 0.10.0
+
 ## Getting started
 
 Given the following Zig code as the file `src/fancylib.zig` and using the C generator:

@@ -1,0 +1,20 @@
+name: zig-checkers
+on:
+  push:
+permissions: {}
+
+jobs:
+  run-zig-build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - name: Setup zig
+        uses: mlugg/setup-zig@v1.2.0
+        with:
+          version: 0.10.0
+      - name: zig-build
+        run: zig build

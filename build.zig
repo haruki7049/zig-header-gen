@@ -1,26 +1,16 @@
-const Builder = @import("std").build.Builder;
-
 const std = @import("std");
-const warn = std.debug.print;
 
-// This build.zig is only used as an example of using header_gen
-
-pub fn build(b: *Builder) void {
+pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
+    const optimize = b.standardOptimizeOption(.{});
 
-    const mode = b.standardReleaseOptions();
-
-    // HEADER GEN BUILD STEP
-    const exe = b.addExecutable("example", "src/example/exports.zig");
-    exe.main_pkg_path = "src/";
-    exe.setTarget(target);
-    exe.setBuildMode(mode);
-    exe.addPackagePath("header_gen", "src/header_gen.zig");
-    exe.install();
-
-    const run_cmd = exe.run();
-    run_cmd.step.dependOn(b.getInstallStep());
-
-    const run_step = b.step("headergen", "Run the app");
-    run_step.dependOn(&run_cmd.step);
+    const header_gen = b.addModule("header_gen", .{ .root_source_file = b.path("src/header_gen.zig"), });
+    const example = b.addExecutable(.{
+        .name = "example",
+        .root_source_file = b.path("example/main.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    example.root_module.addImport("header_gen", header_gen);
+    b.installArtifact(example);
 }

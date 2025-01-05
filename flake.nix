@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/24.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     systems.url = "github:nix-systems/default";
     flake-compat.url = "github:edolstra/flake-compat";
     flake-parts = {
@@ -17,7 +17,7 @@
       perSystem = { pkgs, ... }: {
         devShells.default = pkgs.mkShell {
           packages = [
-            pkgs.zig_0_10
+            pkgs.zig_0_13
           ];
         };
       };

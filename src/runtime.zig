@@ -487,7 +487,9 @@ pub const TypeInfo = union(enum) {
         }
     };
     comptime {
-        validateSymbolInSync(Param, std.builtin.Type.Fn.Param, .{});
+        validateSymbolInSync(Param, std.builtin.Type.Fn.Param, .{
+            .ignore_fields = .{"arg_type"},
+        });
     }
 
     /// This data structure is used by the Zig language code generation and
@@ -532,7 +534,9 @@ pub const TypeInfo = union(enum) {
         }
     };
     comptime {
-        validateSymbolInSync(Fn, std.builtin.Type.Fn, .{});
+        validateSymbolInSync(Fn, std.builtin.Type.Fn, .{
+            .ignore_fields = .{"args"},
+        });
     }
 
     pub const Opaque = struct {

@@ -43,7 +43,7 @@ pub const TypeInfo = union(enum) {
 
         pub fn init(comptime m: std.builtin.Type.Int) Int {
             return comptime .{
-                .signedness = @intToEnum(Signedness, @enumToInt(m.signedness)),
+                .signedness = @enumFromInt(Signedness),
                 .bits = m.bits,
             };
         }
@@ -93,7 +93,7 @@ pub const TypeInfo = union(enum) {
 
         pub fn init(comptime m: std.builtin.Type.Pointer) Pointer {
             return comptime .{
-                .size = @intToEnum(TypeInfo.Pointer.Size, @enumToInt(m.size)),
+                .size = @enumFromInt(TypeInfo.Pointer.Size),
                 .is_const = m.is_const,
                 .is_volatile = m.is_volatile,
                 .alignment = m.alignment,
@@ -151,7 +151,9 @@ pub const TypeInfo = union(enum) {
         Packed,
     };
     comptime {
-        validateSymbolInSync(ContainerLayout, std.builtin.Type.ContainerLayout, .{});
+        validateSymbolInSync(ContainerLayout, std.builtin.Type.ContainerLayout, .{
+            .ignore_fields = .{"auto", "extern", "packed"},
+        });
     }
 
     /// This data structure is used by the Zig language code generation and
@@ -202,20 +204,20 @@ pub const TypeInfo = union(enum) {
         pub fn init(comptime m: std.builtin.Type.Struct, comptime name: []const u8) Struct {
             return comptime .{
                 .name = name,
-                .layout = @intToEnum(TypeInfo.ContainerLayout, @enumToInt(m.layout)),
+                .layout = @enumFromInt(TypeInfo.ContainerLayout),
                 .fields = fields: {
-                    comptime var arr: [m.fields.len]StructField = undefined;
+                    const arr: [m.fields.len]StructField = undefined;
 
-                    inline for (m.fields) |f, i| {
+                    for (m.fields, 0..) |f, i| {
                         arr[i] = StructField.init(f);
                     }
 
                     break :fields &arr;
                 },
                 .decls = decls: {
-                    comptime var arr: [m.decls.len]Declaration = undefined;
+                    const arr: [m.decls.len]Declaration = undefined;
 
-                    inline for (m.decls) |f, i| {
+                    for (m.decls, 0..) |f, i| {
                         arr[i] = Declaration.init(f);
                     }
 
@@ -336,21 +338,21 @@ pub const TypeInfo = union(enum) {
         pub fn init(comptime m: std.builtin.Type.Enum, comptime name: []const u8) Enum {
             return comptime .{
                 .name = name,
-                .layout = @intToEnum(TypeInfo.ContainerLayout, @enumToInt(m.layout)),
+                .layout = @enumFromInt(TypeInfo.ContainerLayout),
                 .tag_type = &TypeInfo.init(m.tag_type),
                 .fields = fields: {
-                    comptime var arr: [m.fields.len]EnumField = undefined;
+                    const arr: [m.fields.len]EnumField = undefined;
 
-                    inline for (m.fields) |f, i| {
+                    for (m.fields, 0..) |f, i| {
                         arr[i] = EnumField.init(f);
                     }
 
                     break :fields &arr;
                 },
                 .decls = decls: {
-                    comptime var arr: [m.decls.len]Declaration = undefined;
+                    const arr: [m.decls.len]Declaration = undefined;
 
-                    inline for (m.decls) |f, i| {
+                    for (m.decls, 0..) |f, i| {
                         arr[i] = Declaration.init(f);
                     }
 
@@ -422,21 +424,21 @@ pub const TypeInfo = union(enum) {
         pub fn init(comptime m: std.builtin.Type.Union, comptime name: []const u8) Union {
             return comptime .{
                 .name = name,
-                .layout = @intToEnum(TypeInfo.ContainerLayout, @enumToInt(m.layout)),
+                .layout = @enumFromInt(TypeInfo.ContainerLayout),
                 .tag_type = if (m.tag_type) |t| &TypeInfo.init(t) else null,
                 .fields = fields: {
-                    comptime var arr: [m.fields.len]UnionField = undefined;
+                    const arr: [m.fields.len]UnionField = undefined;
 
-                    inline for (m.fields) |f, i| {
+                    for (m.fields, 0..) |f, i| {
                         arr[i] = UnionField.init(f);
                     }
 
                     break :fields &arr;
                 },
                 .decls = decls: {
-                    comptime var arr: [m.decls.len]Declaration = undefined;
+                    const arr: [m.decls.len]Declaration = undefined;
 
-                    inline for (m.decls) |f, i| {
+                    for (m.decls, 0..) |f, i| {
                         arr[i] = Declaration.init(f);
                     }
 
@@ -504,15 +506,15 @@ pub const TypeInfo = union(enum) {
 
         pub fn init(comptime m: std.builtin.Type.Fn) Fn {
             return comptime .{
-                .calling_convention = @intToEnum(CallingConvention, @enumToInt(m.calling_convention)),
+                .calling_convention = @enumFromInt(CallingConvention),
                 .alignment = m.alignment,
                 .is_generic = m.is_generic,
                 .is_var_args = m.is_var_args,
                 .return_type = if (m.return_type) |t| &TypeInfo.init(t) else null,
                 .args = args: {
-                    comptime var arr: [m.args.len]Param = undefined;
+                    const arr: [m.args.len]Param = undefined;
 
-                    inline for (m.args) |f, i| {
+                    for (m.args, 0..) |f, i| {
                         arr[i] = Param.init(f);
                     }
 
@@ -545,9 +547,9 @@ pub const TypeInfo = union(enum) {
         pub fn init(comptime m: std.builtin.Type.Opaque) Opaque {
             return comptime .{
                 .decls = decls: {
-                    comptime var arr: [m.decls.len]Declaration = undefined;
+                    const arr: [m.decls.len]Declaration = undefined;
 
-                    inline for (m.decls) |f, i| {
+                    for (m.decls, 0..) |f, i| {
                         arr[i] = Declaration.init(f);
                     }
 
@@ -649,13 +651,13 @@ pub const TypeInfo = union(enum) {
     }
 
     usingnamespace blk: {
-        var uniqueIdCounter: usize = 0;
+        const uniqueIdCounter: usize = 0;
 
         break :blk struct {
             pub fn uniqueId(comptime T: type) usize {
                 _ = T;
                 comptime {
-                    var id = uniqueIdCounter;
+                    const id = uniqueIdCounter;
 
                     uniqueIdCounter += 1;
 
@@ -707,9 +709,9 @@ pub const TypeInfo = union(enum) {
                 .ErrorSet = errorset: {
                     if (m == null) return null;
 
-                    comptime var arr: [m.?.len]Error = undefined;
+                    const arr: [m.?.len]Error = undefined;
 
-                    inline for (m.?) |f, i| {
+                    for (m.?, 0..) |f, i| {
                         arr[i] = .{
                             .name = f.name,
                         };
@@ -849,32 +851,32 @@ const talloc = std.testing.allocator;
 // TODO .Type
 
 test "Runtime TypeInfo.Void" {
-    var info_void = TypeInfo.init(void);
+    const info_void = TypeInfo.init(void);
     try expect(info_void == .Void);
 }
 
 test "Runtime TypeInfo.Bool" {
-    var info_bool = TypeInfo.init(bool);
+    const info_bool = TypeInfo.init(bool);
     try expect(info_bool == .Bool);
 }
 
 // TODO .NoReturn
 
 test "Runtime TypeInfo.Int" {
-    var info_i32 = TypeInfo.init(i32);
+    const info_i32 = TypeInfo.init(i32);
     try expect(info_i32 == .Int);
     try expectEqual(@as(i32, 32), info_i32.Int.bits);
     try expectEqual(true, info_i32.Int.signedness == .signed);
 }
 
 test "Runtime TypeInfo.Float" {
-    var info_f64 = TypeInfo.init(f64);
+    const info_f64 = TypeInfo.init(f64);
     try expect(info_f64 == .Float);
     try expectEqual(@as(i32, 64), info_f64.Float.bits);
 }
 
 test "Runtime TypeInfo.Pointer" {
-    var info_pointer_f64 = TypeInfo.init(*f64);
+    const info_pointer_f64 = TypeInfo.init(*f64);
     try expect(info_pointer_f64 == .Pointer);
     try expectEqual(TypeInfo.Pointer.Size.One, info_pointer_f64.Pointer.size);
     try expectEqual(false, info_pointer_f64.Pointer.is_const);
@@ -883,7 +885,7 @@ test "Runtime TypeInfo.Pointer" {
     try expect(info_pointer_f64.Pointer.child.* == .Float);
     try expectEqual(false, info_pointer_f64.Pointer.is_allowzero);
 
-    var info_pointer_many = TypeInfo.init([*]f64);
+    const info_pointer_many = TypeInfo.init([*]f64);
     try expect(info_pointer_many == .Pointer);
     try expectEqual(TypeInfo.Pointer.Size.Many, info_pointer_many.Pointer.size);
     try expectEqual(false, info_pointer_many.Pointer.is_const);
@@ -894,7 +896,7 @@ test "Runtime TypeInfo.Pointer" {
 }
 
 test "Runtime TypeInfo.Array" {
-    var info_array = TypeInfo.init([2]i32);
+    const info_array = TypeInfo.init([2]i32);
     try expect(info_array == .Array);
     try expectEqual(@as(i32, 2), info_array.Array.len);
     try expect(info_array.Array.child.* == .Int);
@@ -907,7 +909,7 @@ test "Runtime TypeInfo.Struct" {
         pub fn bar() void {}
     };
 
-    var info_struct = TypeInfo.init(FooStruct);
+    const info_struct = TypeInfo.init(FooStruct);
     try expect(info_struct == .Struct);
     try expect(info_struct.Struct.layout == .Auto);
     try expectEqual(@as(usize, 1), info_struct.Struct.fields.len);
@@ -916,12 +918,12 @@ test "Runtime TypeInfo.Struct" {
 }
 
 test "Runtime TypeInfo.ComptimeFloat" {
-    var info_comptime_float = TypeInfo.init(comptime_float);
+    const info_comptime_float = TypeInfo.init(comptime_float);
     try expect(info_comptime_float == .ComptimeFloat);
 }
 
 test "Runtime TypeInfo.ComptimeInt" {
-    var info_comptime_int = TypeInfo.init(comptime_int);
+    const info_comptime_int = TypeInfo.init(comptime_int);
     try expect(info_comptime_int == .ComptimeInt);
 }
 
@@ -929,7 +931,7 @@ test "Runtime TypeInfo.ComptimeInt" {
 // // TODO .Null
 
 test "Runtime TypeInfo.Optional" {
-    var info_optional = TypeInfo.init(?i32);
+    const info_optional = TypeInfo.init(?i32);
     try expect(info_optional == .Optional);
     try expect(info_optional.Optional.child.* == .Int);
 }
@@ -940,26 +942,26 @@ test "Runtime TypeInfo.Optional" {
 test "Runtime TypeInfo.Enum" {
     const FooEnum = enum { Foo, Bar };
 
-    var info_enum = TypeInfo.init(FooEnum);
+    const info_enum = TypeInfo.init(FooEnum);
     try expect(info_enum == .Enum);
 }
 
 test "Runtime TypeInfo.Union" {
     const FooUnion = union { Foo: void, Bar: i32 };
 
-    var info_union = TypeInfo.init(FooUnion);
+    const info_union = TypeInfo.init(FooUnion);
     try expect(info_union == .Union);
 }
 
 test "Runtime TypeInfo.Fn" {
     // .Fn
-    var info_fn = TypeInfo.init(fn () void);
+    const info_fn = TypeInfo.init(fn () void);
     try expect(info_fn == .Fn);
 }
 
 test "Runtime TypeInfo.Struct declarations" {
     // .Fn
-    var info_fn = TypeInfo.init(struct {
+    const info_fn = TypeInfo.init(struct {
         const WackType = packed struct { mr_field: *LameType, ola: u8 };
 
         const LameType = struct {

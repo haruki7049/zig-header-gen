@@ -20,7 +20,7 @@ Here are the following supported Zig language features:
 
 ## Zig version
 
-zig 0.10.0
+zig 0.13.0
 
 ## Getting started
 

@@ -154,7 +154,7 @@ pub fn DepsGraph(comptime T: type) type {
         }
 
         pub fn endSymbol(self: *Self) EndSymbolError!void {
-            var current_symbol = self.current_symbol orelse return;
+            const current_symbol = self.current_symbol orelse return;
 
             var unblock_queue = std.TailQueue(EmittedSymbol){};
 
